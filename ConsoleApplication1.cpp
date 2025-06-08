@@ -546,7 +546,7 @@ int main() {
 
     PrintInstalledUpdates();
 
-    std::wcout << L"\n" << COLOR_LABEL << L"=== Thanks for using HEWSTORE! ===" << COLOR_RESET << std::endl;
+    std::wcout << L"\n" << COLOR_LABEL << L"=== Thanks for choosing HEWSTORE! ===" << COLOR_RESET << std::endl;
     std::wcout << L"Visit our website at: " << COLOR_LINK << L"hewstore.com" << COLOR_RESET << std::endl;
 
     ScrollConsoleToTop();
