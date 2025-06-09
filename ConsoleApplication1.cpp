@@ -80,7 +80,16 @@ std::wstring GetDisplayVersion() {
         L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
         0, KEY_READ, &hKey) == ERROR_SUCCESS) {
 
+        // Сначала пытаемся получить DisplayVersion (для 20H2+)
         if (RegQueryValueExW(hKey, L"DisplayVersion", nullptr, nullptr,
+            (LPBYTE)value, &size) == ERROR_SUCCESS) {
+            RegCloseKey(hKey);
+            return value;
+        }
+
+        // Если DisplayVersion нет, пробуем ReleaseId (для <= 2004)
+        size = sizeof(value); // сброс размера буфера
+        if (RegQueryValueExW(hKey, L"ReleaseId", nullptr, nullptr,
             (LPBYTE)value, &size) == ERROR_SUCCESS) {
             RegCloseKey(hKey);
             return value;
@@ -88,6 +97,7 @@ std::wstring GetDisplayVersion() {
 
         RegCloseKey(hKey);
     }
+
     return L"Unavailable";
 }
 
