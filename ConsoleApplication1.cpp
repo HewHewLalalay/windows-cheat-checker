@@ -147,6 +147,26 @@ std::wstring CheckRegistryDWORD(HKEY root, const std::wstring& path, const std::
     return L"Unavailable";
 }
 
+std::wstring GetSecureBootStatusFromPowerShell() {
+    // Команда PowerShell для проверки состояния Secure Boot
+    const wchar_t* cmd = L"powershell -Command \"Confirm-SecureBootUEFI\"";
+
+    // Буфер для чтения вывода
+    wchar_t buffer[128];
+    std::wstring result = L"Unavailable";
+
+    // Открытие процесса PowerShell
+    FILE* pipe = _wpopen(cmd, L"r");
+    if (pipe) {
+        // Чтение строки результата
+        if (fgetws(buffer, sizeof(buffer) / sizeof(wchar_t), pipe)) {
+            result = (wcsstr(buffer, L"True") != nullptr) ? L"Enabled" : L"Disabled";
+        }
+        fclose(pipe);
+    }
+    return result;
+}
+
 std::wstring CheckWindowsDefenderStatus() {
     SC_HANDLE scManager = OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
     if (!scManager) return L"Unavailable";
@@ -523,8 +543,11 @@ int main() {
         L"SYSTEM\\CurrentControlSet\\Control\\CI\\Config", L"VulnerableDriverBlocklistEnable");
 
     std::wstring defender = CheckWindowsDefenderStatus();
+
     std::wstring memoryIntegrity = CheckRegistryDWORD(HKEY_LOCAL_MACHINE,
         L"SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity", L"Enabled");
+
+    std::wstring secureBootStatus = GetSecureBootStatusFromPowerShell();
 
     std::wstring firewall = CheckFirewallStatus();
     bool cfgEnabled = IsCFGEnabled();
@@ -535,6 +558,8 @@ int main() {
         << L"- " << FormatStatusText(defender) << std::endl;
     std::wcout << COLOR_LABEL << L"Core Isolation (Memory Integrity):\n " << COLOR_RESET
         << L"- " << FormatStatusText(memoryIntegrity) << std::endl;
+    std::wcout << COLOR_LABEL << L"Secure Boot:\n " << COLOR_RESET
+        << L"- " << FormatStatusText(secureBootStatus) << std::endl;
     std::wcout << COLOR_LABEL << L"Firewall Status:\n " << COLOR_RESET
         << L"- " << FormatStatusText(firewall) << std::endl;
     std::wcout << COLOR_LABEL << L"Control Flow Guard (CFG):\n " << COLOR_RESET
